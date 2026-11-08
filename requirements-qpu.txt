@@ -1,0 +1,7 @@
+-r requirements-local.txt
+qoolqit==1.5.0
+pasqal-cloud==0.24.0
+pulser==1.10.0
+nbformat>=5.10,<6
+ipykernel>=6
+python-dotenv>=1

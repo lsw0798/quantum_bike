@@ -1,0 +1,17 @@
+# 자격 증명 (예시 파일 .env.example만 올린다)
+.env
+.env.*
+!.env.example
+
+# 가상환경과 캐시
+.venv-qpu/
+__pycache__/
+.pytest_cache/
+.ipynb_checkpoints/
+
+# 에디터 설정
+.vscode/
+
+# 원본 자료와 실행 결과 (용량이 크고 GitHub 파일 한도 100MB를 넘는다)
+origin_data/
+outputs/
