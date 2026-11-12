@@ -1,0 +1,52 @@
+{
+  "candidate_audit": {
+    "delivery_stations": 14,
+    "enumerated_tasks": 1540,
+    "nearby_stations": 55,
+    "pickup_stations": 28,
+    "retained_fraction": 0.005194805194805195,
+    "retained_tasks": 8,
+    "selection": "seeded_uniform_sample_before_embedding"
+  },
+  "certificate": {
+    "auxiliary_atoms": 0,
+    "c6": 865723.02,
+    "commanded_hamiltonian_only": true,
+    "device_specs_dimensionless": {
+      "max_abs_detuning": 2.268041120696572,
+      "max_amplitude": 0.22680411206965717,
+      "max_duration": 332.43763968,
+      "max_radial_distance": 7.6,
+      "min_distance": 1.0
+    },
+    "duration_ns": 4800,
+    "final_amplitude": 0.0,
+    "final_detuning": 0.14718598887943155,
+    "interpretation": "ideal final Hamiltonian only; no finite-time/noise guarantee",
+    "logical_nodes": 8,
+    "maximum_nonedge_interaction": 0.025655108214858734,
+    "minimum_edge_interaction": 0.22593841797418696,
+    "native_adjacency_exact": true,
+    "node_order": [
+      "T000",
+      "T001",
+      "T002",
+      "T003",
+      "T004",
+      "T005",
+      "T006",
+      "T007"
+    ],
+    "physical_atoms": 8,
+    "sufficient_final_energy_certificate": true,
+    "total_nonedge_interaction_bound": 0.06843352787613313,
+    "units": "distance: um; interaction/detuning: rad/us; duration: ns"
+  },
+  "data_snapshot": "2025-07-15T08:00:00",
+  "duration_ns": 4800,
+  "edges": 10,
+  "live_authentication_performed": false,
+  "live_qpu_submission_performed": false,
+  "note": "AnalogDevice offline compile only; actual account device checked at user execution.",
+  "offline_device": "AnalogDevice"
+}

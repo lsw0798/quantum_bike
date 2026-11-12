@@ -35,6 +35,7 @@ from collections import defaultdict
 from fractions import Fraction
 from itertools import combinations, product
 import math
+import time
 from typing import Any
 
 
@@ -85,7 +86,7 @@ def _inputs(case: dict) -> tuple[list[dict], list[dict]]:
 
 
 def _compile_clauses(
-    case: dict, max_support: int, max_clauses: int
+    case: dict, max_support: int, max_clauses: int, deadline: float = math.inf
 ) -> tuple[list[Clause], dict[str, list[str]]]:
     """요청 배타성·자원 충돌·선형 제약을 CNF 절과 절별 출처로 컴파일한다."""
     candidates, rows = _inputs(case)
@@ -97,6 +98,8 @@ def _compile_clauses(
 
     def add_clause(literals: list[Literal], reason: str) -> None:
         """절을 정규화해 추가한다. 항진식과 포섭되는 절은 합치거나 버린다."""
+        if time.perf_counter() > deadline:
+            raise EncodingLimitError("Exact encoding wall-clock limit exceeded")
         # 빈 절은 만족할 수 없으므로 모델이 불가능하다.
         normalized = tuple(sorted(set(literals)))
         if not normalized:
@@ -177,6 +180,8 @@ def _compile_clauses(
 
     # 선형 제약 행별 반복
     for index, row in enumerate(rows):
+        if time.perf_counter() > deadline:
+            raise EncodingLimitError("Exact encoding wall-clock limit exceeded")
         reason = str(row.get("id", f"row:{index}"))
 
         # 계수를 정확한 분수로 읽고 0인 계수는 뺀다.
@@ -220,6 +225,8 @@ def _compile_clauses(
         choices = [[None, *group] for _, group in sorted(local_requests.items())]
 
         for selected in product(*choices):
+            if time.perf_counter() > deadline:
+                raise EncodingLimitError("Exact encoding wall-clock limit exceeded")
             # 선택 조합을 지지 집합 위의 0/1 배정으로 펼친다.
             assignment = {key: 0 for key in support}
             for key in selected:
@@ -268,10 +275,11 @@ def _compile_clauses(
 def encode_operational_mis(
     case: dict,
     *,
-    max_support: int = 12,
+    max_support: int = 16,
     max_clauses: int = 5000,
-    max_nodes: int = 10000,
-    max_edges: int = 1000000,
+    max_nodes: int = 12000,
+    max_edges: int = 500000,
+    max_seconds: float = 60.0,
 ) -> dict:
     """정확한 비가중 그래프를 반환하거나, 크기/불가능 오류를 명시적으로 낸다.
 
@@ -281,10 +289,14 @@ def encode_operational_mis(
     # 한도 값을 검증한다.
     if min(max_support, max_clauses, max_nodes, max_edges) < 1:
         raise ValueError("Encoding limits must all be positive")
+    if not math.isfinite(max_seconds) or max_seconds <= 0:
+        raise ValueError("Encoding wall-clock limit must be finite and positive")
+    started = time.perf_counter()
+    deadline = started + max_seconds
 
     # 절을 컴파일하고, 절 하나를 빠뜨린 손해가 보상 전체보다 크도록 가중치 W를 정한다.
     candidates, rows = _inputs(case)
-    clauses, provenance = _compile_clauses(case, max_support, max_clauses)
+    clauses, provenance = _compile_clauses(case, max_support, max_clauses, deadline)
     candidate_ids = sorted(str(candidate["id"]) for candidate in candidates)
     weight = len(candidate_ids) + 1
 
@@ -314,6 +326,8 @@ def encode_operational_mis(
 
     def add_edge(left: str, right: str, reason: str) -> None:
         """사유와 함께 엣지를 추가한다."""
+        if len(edges) % 1024 == 0 and time.perf_counter() > deadline:
+            raise EncodingLimitError("Exact encoding wall-clock limit exceeded")
         edges.append({"source": left, "target": right, "reasons": [reason]})
 
     # 후보마다 x_v=1에 대응하는 보상 정점을 만든다.
@@ -390,9 +404,11 @@ def encode_operational_mis(
                 "max_clauses": max_clauses,
                 "max_nodes": max_nodes,
                 "max_edges": max_edges,
+                "max_seconds": max_seconds,
             },
             "feasibility": "requires_clause_complete_decoding_or_exact_certificate",
             "scope": "exact for supplied request, resource and linear constraints",
+            "construction_seconds": time.perf_counter() - started,
         },
     }
 

@@ -5,6 +5,8 @@
 
 # 가상환경과 캐시
 .venv-qpu/
+.venv-classical/
+.venv-classical/
 __pycache__/
 .pytest_cache/
 .ipynb_checkpoints/

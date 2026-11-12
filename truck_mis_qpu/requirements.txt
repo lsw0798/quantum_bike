@@ -1,0 +1,11 @@
+# 검증한 SDK 버전을 고정합니다. NumPy 2를 지원하는 패키지끼리 별도 가상환경에 설치합니다.
+qoolqit==1.5.0
+pasqal-cloud==0.24.0
+pulser==1.10.0
+numpy>=2,<3
+scipy>=1.13,<2
+pandas>=2.2,<3
+matplotlib>=3.9,<4
+openpyxl>=3.1,<4
+python-dotenv>=1,<2
+pytest>=8,<9

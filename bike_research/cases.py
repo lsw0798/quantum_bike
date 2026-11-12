@@ -22,7 +22,7 @@ def distance_m(lat1, lon1, lat2, lon2):
 
 
 def neighbours(stations, radius_m=500, alternatives=2):
-    """대여소마다 자기 자신과 반경 안의 가까운 대체 대여소 목록을 만든다."""
+    """자기 자신과 반경 이웃. alternatives=None이면 이웃 수를 제한하지 않는다."""
     ids = list(stations.index)
 
     # 위경도를 단위 구 위의 3차원 좌표로 바꿔 KD-트리를 만든다.

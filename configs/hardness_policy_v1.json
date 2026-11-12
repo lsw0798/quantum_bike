@@ -1,0 +1,57 @@
+{
+  "policy_version": "seoul-bike-hardness-v1.0",
+  "decision_date": "2026-11-09",
+  "status": "adopted_research_protocol",
+  "structure_scan_seconds": 5.0,
+  "shortlist_per_size_bin": 3,
+  "size_bin": "powers_of_two",
+  "seed": 20261109,
+  "population": {
+    "scope": "all_dates_with_joinable_real_trips_stations_and_hourly_inventory",
+    "window_minutes": 60,
+    "stride_minutes": 60,
+    "spatial_unit": "departure_district_with_external_background_events",
+    "peak_usage_is_separate_control_group": true,
+    "manufacture_conflicts_or_requests": false
+  },
+  "structural_screen": {
+    "require_nonzero_cross_request_conflicts_for_graph_hardness_search": true,
+    "exact_certificates": ["request_clique_cover_bound", "simplicial_elimination"],
+    "preserve_raw_graph_and_operational_constraints": true,
+    "residual_rank": ["largest_residual_component_desc", "cross_request_edges_desc", "case_id_asc"],
+    "residual_rank_is_not_hardness_confirmation": true
+  },
+  "confirmation": {
+    "exact_solvers": ["HiGHS", "OR-Tools CP-SAT"],
+    "strong_heuristic_validation": "ReduMIS_or_equivalent_specialized_MIS_method",
+    "seconds_per_solver_per_run": 60.0,
+    "repeats_per_solver": 5,
+    "threads_per_solver": 1,
+    "seeds": [20261109, 20261110, 20261111, 20261112, 20261113],
+    "proof_unresolved_requires_all_exact_runs_without_certificate": true,
+    "portfolio_bounds": "L=max(validated_lower_bounds), U=min(valid_upper_bounds)",
+    "relative_gap": "(U-L)/max(1,U)",
+    "positive_integer_gap_required": true,
+    "solver_errors_are_not_hardness": true,
+    "relative_hard_fraction": 0.1,
+    "minimum_instances_per_size_bin": 20,
+    "minimum_fastest_solver_median_seconds": 1.0,
+    "finding_and_proof_times_separate": true,
+    "unknown_optimum_finding_label": "not_assessable_against_true_optimum",
+    "not_implemented_by_structural_screening_cli": true
+  },
+  "evaluation": {
+    "ordinary_controls_per_size_bin": 3,
+    "ordinary_control_selection": "seeded_uniform_sampling",
+    "group_related_cases_by": ["date", "district"],
+    "already_inspected_dates_are_development_only": ["2025-06-05", "2025-06-10"],
+    "uninspected_dates_chronological_development_fraction": 0.7,
+    "holdout_unit": "whole_date_across_all_districts",
+    "selection_and_evaluation_runs_separate": true,
+    "graph_relaxation_not_full_operational_problem": true,
+    "qpu_input_same_logical_graph_as_classical": true,
+    "qpu_execution_authorized": false
+  },
+  "numeric_threshold_evidence": "Researcher-defined protocol; not thresholds prescribed by cited papers.",
+  "references": ["R02", "R12", "R14", "R15", "R17", "R18", "R20", "R21", "R22"]
+}

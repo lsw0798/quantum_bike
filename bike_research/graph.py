@@ -165,7 +165,8 @@ def _unique_rows(rows: list[dict]) -> list[dict]:
 
 
 def build_graph(case: dict, *, max_pair_deductions: int = 500_000,
-                max_edges: int = 1_000_000, inference_seconds: float = 15.0) -> dict:
+                max_edges: int = 1_000_000, inference_seconds: float = 15.0,
+                max_seconds: float | None = None) -> dict:
     """실제 후보 ID를 보존하는 무방향 비가중 그래프를 만든다.
 
     c*x <= U에서 u,v를 고른 뒤 남은 음수 계수를 전부 고르는 것이
@@ -177,9 +178,12 @@ def build_graph(case: dict, *, max_pair_deductions: int = 500_000,
         raise ValueError("Graph budgets cannot be negative")
     if not math.isfinite(inference_seconds):
         raise ValueError("inference_seconds must be finite")
+    if max_seconds is not None and (not math.isfinite(max_seconds) or max_seconds <= 0):
+        raise ValueError("Graph wall-clock limit must be finite and positive")
 
     # 입력을 정규화한다.
     started = time.perf_counter()
+    deadline = started + max_seconds if max_seconds is not None else math.inf
     candidates = _candidates(case)
     rows = _constraints(case, set(candidates))
     unique_rows = _unique_rows(rows)
@@ -188,6 +192,8 @@ def build_graph(case: dict, *, max_pair_deductions: int = 500_000,
 
     # 단독으로 골라도 제약을 위반하는 후보를 찾아 사유와 함께 제외한다.
     for row in unique_rows:
+        if time.perf_counter() > deadline:
+            raise ValueError("Graph wall-clock limit exceeded")
         coefficients = row["coefficients"]
         minimum = sum(min(value, 0) for value in coefficients.values())
         maximum = sum(max(value, 0) for value in coefficients.values())
@@ -202,14 +208,25 @@ def build_graph(case: dict, *, max_pair_deductions: int = 500_000,
 
     def add_edge(source: str, target: str, reason: str):
         """남은 후보 사이에 충돌 엣지와 사유를 추가한다."""
+        if len(edges) % 1024 == 0 and time.perf_counter() > deadline:
+            raise ValueError("Graph wall-clock limit exceeded")
         if source in remaining and target in remaining:
             # 예산을 넘는 새 엣지는 필수 충돌이므로 임의로 버리지 않고 중단한다.
             if len(edges) >= max_edges and tuple(sorted((source, target))) not in edges:
                 raise ValueError("Graph edge budget exceeded by mandatory conflicts")
             edges[tuple(sorted((source, target)))].add(reason)
 
+    # 요청 clique의 필수 엣지는 서로 겹치지 않아 생성 전 정확히 셀 수 있다.
+    # 한도 초과를 먼저 거절하여 수십만 엣지를 만들고 버리는 일을 피한다.
+    request_groups = _request_groups(candidates)
+    remaining_group_sizes = [len(set(group) & remaining) for group in request_groups.values()]
+    mandatory_request_edges = sum(size * (size - 1) // 2 for size in remaining_group_sizes)
+    if mandatory_request_edges > max_edges:
+        raise ValueError(f"Graph edge budget exceeded by mandatory request cliques: "
+                         f"{mandatory_request_edges} > {max_edges}")
+
     # 같은 요청의 후보끼리는 항상 충돌한다.
-    for request_id, group in _request_groups(candidates).items():
+    for request_id, group in request_groups.items():
         for source, target in combinations(sorted(set(group) & remaining), 2):
             add_edge(source, target, f"same_request:{request_id}")
 
@@ -224,6 +241,8 @@ def build_graph(case: dict, *, max_pair_deductions: int = 500_000,
 
     # 수량 제약에서 어떤 경우에도 함께 고를 수 없는 쌍을 추론한다.
     for row in unique_rows:
+        if time.perf_counter() > deadline:
+            raise ValueError("Graph wall-clock limit exceeded")
         # 추론 예산이 다 되면 중단하고 표시를 남긴다.
         if (deductions >= max_pair_deductions or len(edges) >= max_edges
                 or time.perf_counter() - inference_started >= inference_seconds):
@@ -601,7 +620,7 @@ def benchmark_graph(graph: dict, time_limit: float = 10.0, greedy_repeats: int =
         result["upper_bound"] if result["upper_bound"] is not None else len(adjacency)
     )
     result["absolute_gap"] = max(0, result["upper_bound"] - result["objective"])
-    result["gap"] = result["absolute_gap"] / max(1, result["objective"])
+    result["gap"] = result["absolute_gap"] / max(1, result["upper_bound"])
 
     # 탐욕법 요약을 기록한다.
     result["greedy"] = {
