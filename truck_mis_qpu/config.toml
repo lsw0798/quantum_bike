@@ -1,0 +1,41 @@
+# 이 파일의 수치는 따릉이 공식 운영정책이 아닌 재현 가능한 파일럿 실험 설정입니다.
+[paths]
+# 사용자 지정 원본 프로젝트. 다른 컴퓨터에서는 이 경로만 수정하세요.
+project_root = "/Users/leeseungwoo/Desktop/backup/lsw2026/quantum_bike"
+data_dir = "origin_data"
+env_file = ".env"
+output_dir = "outputs"
+
+[data]
+snapshot_timestamp = "2025-07-15T08:00:00"
+history_days = 14
+minimum_history_days = 7
+same_hour = true
+mode = "historical_median"
+fixed_target = 10
+
+[model]
+origin_station_id = "102"  # 망원역 1번출구 앞
+radius_km = 2.0
+truck_capacity = 20
+bikes_per_task = 2         # 모든 노드가 같은 수량: 작업 수 최대화 = 운반 대수 최대화
+horizon_min = 120.0
+start_step_min = 30.0
+truck_speed_kmh = 15.0    # 직선거리 환산용 실험 가정
+handling_min_per_bike = 1.0
+stop_overhead_min = 2.0
+max_tasks = 8             # 전체 후보에서 고정 seed로 추출한 파일럿 부분문제
+candidate_seed = 42
+
+[qpu]
+device_name = "EMU_FRESNEL"
+region = "fr"
+shots = 100
+seed = 42
+maxiter = 5000
+duration = 40.0
+amplitude_factor = 6.5   # EMU_FRESNEL에 사용할 FRESNEL 물리 사양의 최소 평균 진폭 만족
+device_max_duration_ratio = 0.8
+poll_timeout_seconds = 30
+# 외부 원자 배치 JSON을 사용하려면 절대경로 지정. 위경도는 원자 좌표가 아닙니다.
+coordinates_path = ""
